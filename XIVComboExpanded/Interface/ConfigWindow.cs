@@ -229,7 +229,7 @@ public class ConfigWindow : Window
                                         {
                                             if (secretTab)
                                             {
-                                            ImGui.BeginChild("scrolling", new Vector2(0, -1), true);
+                                            ImGui.BeginChild("scrolling-secret", new Vector2(0, -1), true);
 
                                             int i = 1;
                                             string previousSection = string.Empty;
@@ -249,7 +249,7 @@ public class ConfigWindow : Window
                                         {
                                             if (accessibilityTab)
                                             {
-                                                ImGui.BeginChild("scrolling", new Vector2(0, -1), true);
+                                                ImGui.BeginChild("scrolling-accessibility", new Vector2(0, -1), true);
 
                                                 int i = 1;
                                                 string previousSection = string.Empty;
@@ -269,7 +269,7 @@ public class ConfigWindow : Window
                                         {
                                             if (expandedTab)
                                             {
-                                                ImGui.BeginChild("scrolling", new Vector2(0, -1), true);
+                                                ImGui.BeginChild("scrolling-expanded", new Vector2(0, -1), true);
 
                                                 int i = 1;
                                                 string previousSection = string.Empty;
@@ -289,7 +289,7 @@ public class ConfigWindow : Window
                                         {
                                             if (classicTab)
                                             {
-                                                ImGui.BeginChild("scrolling", new Vector2(0, -1), true);
+                                                ImGui.BeginChild("scrolling-classic", new Vector2(0, -1), true);
 
                                                 int i = 1;
                                                 string previousSection = string.Empty;

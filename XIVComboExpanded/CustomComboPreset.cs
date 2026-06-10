@@ -2094,24 +2094,28 @@ public enum CustomComboPreset
     [IconsCombo([SGE.Eukrasia, UTL.ArrowLeft, SGE.Dosis, UTL.Blank, SGE.Buffs.Eukrasia, UTL.Checkmark])]
     [SectionCombo("Eukrasia")]
     [AccessibilityCustomCombo]
+    [ConflictingCombos(SageEukrasianDiagnosisFeature, SageEukrasianPrognosisFeature, SageEukrasianDyskrasiaFeature)]
     [CustomComboInfo("Eukrasian Dosis", "Replace Eukrasia with Dosis when Eukrasia is active. Conflicts with the other Eukrasian options.", SGE.JobID)]
     SageEukrasianDosisFeature = 4020,
 
     [IconsCombo([SGE.Eukrasia, UTL.ArrowLeft, SGE.Diagnosis, UTL.Blank, SGE.Buffs.Eukrasia, UTL.Checkmark])]
     [SectionCombo("Eukrasia")]
     [AccessibilityCustomCombo]
+    [ConflictingCombos(SageEukrasianDosisFeature, SageEukrasianPrognosisFeature, SageEukrasianDyskrasiaFeature)]
     [CustomComboInfo("Eukrasian Diagnosis", "Replace Eukrasia with Diagnosis when Eukrasia is active. Conflicts with the other Eukrasian options.", SGE.JobID)]
     SageEukrasianDiagnosisFeature = 4017,
 
     [IconsCombo([SGE.Eukrasia, UTL.ArrowLeft, SGE.Prognosis, UTL.Blank, SGE.Buffs.Eukrasia, UTL.Checkmark])]
     [SectionCombo("Eukrasia")]
     [AccessibilityCustomCombo]
+    [ConflictingCombos(SageEukrasianDosisFeature, SageEukrasianDiagnosisFeature, SageEukrasianDyskrasiaFeature)]
     [CustomComboInfo("Eukrasian Prognosis", "Replace Eukrasia with Prognosis when Eukrasia is active. Conflicts with the other Eukrasian options.", SGE.JobID)]
     SageEukrasianPrognosisFeature = 4018,
 
     [IconsCombo([SGE.Eukrasia, UTL.ArrowLeft, SGE.Dyskrasia, UTL.Blank, SGE.Buffs.Eukrasia, UTL.Checkmark])]
     [SectionCombo("Eukrasia")]
     [AccessibilityCustomCombo]
+    [ConflictingCombos(SageEukrasianDosisFeature, SageEukrasianDiagnosisFeature, SageEukrasianPrognosisFeature)]
     [CustomComboInfo("Eukrasian Dyskrasia", "Replace Eukrasia with Dyskrasia when Eukrasia is active. Conflicts with the other Eukrasian options.", SGE.JobID)]
     SageEukrasianDyskrasiaFeature = 4019,
 
