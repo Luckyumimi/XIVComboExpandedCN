@@ -702,15 +702,15 @@ public class ConfigWindow : Window
                     return;
                 break;
             case Tabs.Expanded:
-                if (!expanded || accessibility || secret)
+                if (accessibility || secret)
                     return;
                 break;
             case Tabs.Accessibility:
-                if (!accessibility || secret)
+                if (secret)
                     return;
                 break;
             case Tabs.Secret:
-                if (!secret)
+                if (accessibility && !Service.Configuration.EnableAccessibilityCombos)
                     return;
                 break;
             default:
@@ -753,15 +753,15 @@ public class ConfigWindow : Window
                     return previousSection;
                 break;
             case Tabs.Expanded:
-                if (!expanded || accessibility || secret)
+                if (accessibility || secret)
                     return previousSection;
                 break;
             case Tabs.Accessibility:
-                if (!accessibility || secret)
+                if (secret)
                     return previousSection;
                 break;
             case Tabs.Secret:
-                if (!secret)
+                if (accessibility && !Service.Configuration.EnableAccessibilityCombos)
                     return previousSection;
                 break;
             default:
