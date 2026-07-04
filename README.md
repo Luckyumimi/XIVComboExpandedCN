@@ -36,4 +36,3 @@ XIVCombo 是一个用于实现“一键连击”的插件，同时也提供多�
 这个 attick 的 XIVCombo 分支最初由 [daemitus](https://github.com/daemitus) 开发。我在他不再游玩本游戏后接手维护。
 为了保证迁移过程平滑，在 daemitus 的配合下，仓库地址保持不变。
 感谢 Meli 提供最初的起点，当然也要感谢 goat，没有他这些都无法实现。
-lichi7887 为本插件适配了《最终幻想 XIV》国服客户端。
