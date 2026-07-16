@@ -13,6 +13,13 @@ namespace XIVComboExpanded.Interface
             return new Dictionary<string, string[]>()
                 {
                     {
+                        "v2.0.6.3",
+                        [
+                            "同步上游的快捷栏图标染色功能。",
+                            "支持为共用起手技能的连击设置颜色、透明度及独立着色方式。"
+						]
+                    },
+                    {
                         "v2.0.6.2",
                         [
                             "API 15 update.",

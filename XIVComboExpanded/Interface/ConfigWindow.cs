@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -59,6 +59,31 @@ public class ConfigWindow : Window
     private readonly Dictionary<CustomComboPreset, (CustomComboPreset Preset, CustomComboInfoAttribute Info)[]> presetChildren;
     private readonly Vector4 shadedColor = new(0.68f, 0.68f, 0.68f, 1.0f);
     private XIVComboExpandedPlugin Plugin;
+
+    // Set when a tint picker changed the in-memory config; flushed to disk once the
+    // user stops interacting (saving every frame during a drag tanks the framerate).
+    private bool tintDirty = false;
+
+    // Quick-pick palette shown on top of the tint picker (0xAARRGGBB, 50% intensity baked in).
+    private static readonly uint[] TintPalette =
+    [
+        0x80FFFFFF, // White
+        0x80FF88CC, // Pink
+        0x80FF2020, // Red
+        0x80CC0022, // Crimson
+        0x80FF8800, // Orange
+        0x80FFCC00, // Gold
+        0x80FFFF00, // Yellow
+        0x8088FF00, // Lime
+        0x8020FF20, // Green
+        0x8000CC99, // Teal
+        0x8000FFFF, // Cyan
+        0x8066AAFF, // Sky blue
+        0x802060FF, // Blue
+        0x803300FF, // Indigo
+        0x809900FF, // Violet
+        0x80FF00FF, // Magenta
+    ];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigWindow"/> class.
@@ -192,9 +217,11 @@ public class ConfigWindow : Window
                                     ImGui.EndTable();
                                 }
                             }
-
-                            ImGui.EndChild();
                         }
+
+                        // EndChild must be called regardless of BeginChild's return value,
+                        // or a collapsed window leaves the child on the stack and asserts.
+                        ImGui.EndChild();
 
                         ImGui.SameLine();
 
@@ -304,9 +331,11 @@ public class ConfigWindow : Window
                                     }
                                 }
                             }
-
-                            ImGui.EndChild();
                         }
+
+                        // EndChild must be called regardless of BeginChild's return value,
+                        // or a collapsed window leaves the child on the stack and asserts.
+                        ImGui.EndChild();
 
                         ImGui.Unindent();
 
@@ -326,7 +355,7 @@ public class ConfigWindow : Window
                         ImGuiWindowFlags window_flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.ChildWindow;
                         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(0, 5)))
                         {
-                            ImGui.BeginChild("ChildL", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X * 0.5f - ImGui.GetScrollX(), 300f), true, window_flags);
+                            ImGui.BeginChild("ChildL", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X * 0.5f - ImGui.GetScrollX(), 360f), true, window_flags);
 
                             using (ImRaii.PushFont(UiBuilder.MonoFont))
                             using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
@@ -369,6 +398,41 @@ public class ConfigWindow : Window
                             {
                                 Service.Configuration.BigJobIcons = bigJobIcons;
                                 Service.Configuration.Save();
+                            }
+
+                            var enableRecoloring = Service.Configuration.EnableIconRecoloring;
+                            if (ImGui.Checkbox("启用快捷栏图标染色。", ref enableRecoloring))
+                            {
+                                Service.Configuration.EnableIconRecoloring = enableRecoloring;
+                                Service.Configuration.Save();
+                            }
+
+                            if (ImGui.IsItemHovered())
+                            {
+                                ImGui.BeginTooltip();
+                                ImGui.TextUnformatted("可显示相同技能的连击会在连击页面中提供颜色选择器。\n所选颜色会为快捷栏图标染色以便区分；颜色透明度决定染色强度。");
+                                ImGui.EndTooltip();
+                            }
+
+                            if (enableRecoloring)
+                            {
+                                ImGui.Indent();
+                                var method = (int)Service.Configuration.ColoringMethod;
+                                ImGui.SetNextItemWidth(180f);
+                                if (ImGui.Combo("着色方式", ref method, ["鲜明", "着色", "辉光"], 3))
+                                {
+                                    Service.Configuration.ColoringMethod = (IconColoringMethod)method;
+                                    Service.Configuration.Save();
+                                }
+
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.BeginTooltip();
+                                    ImGui.TextUnformatted("鲜明：将图标整体调整为所选颜色，并添加明亮辉光，效果最强。\n着色：使用所选颜色压暗其他色彩，效果较柔和并保留图标细节。\n辉光：保留图标原有明暗，仅将光照偏向所选颜色，效果介于两者之间。");
+                                    ImGui.EndTooltip();
+                                }
+
+                                ImGui.Unindent();
                             }
 
                             var hideIcons = Service.Configuration.HideIcons;
@@ -416,7 +480,7 @@ public class ConfigWindow : Window
 
                         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(0, 5)))
                         {
-                            ImGui.BeginChild("ChildR", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetScrollX(), 300f), true, window_flags);
+                            ImGui.BeginChild("ChildR", new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetScrollX(), 360f), true, window_flags);
 
                             using (ImRaii.PushFont(UiBuilder.MonoFont))
                             using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.TankBlue))
@@ -682,6 +746,138 @@ public class ConfigWindow : Window
             }
 
         }
+
+        // Flush pending tint changes once the user has let go of the picker.
+        if (this.tintDirty && !ImGui.IsAnyItemActive())
+        {
+            Service.Configuration.Save();
+            this.tintDirty = false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public override void OnClose()
+    {
+        // Catch tint edits still pending when the window closes mid-drag.
+        if (this.tintDirty)
+        {
+            Service.Configuration.Save();
+            this.tintDirty = false;
+        }
+
+        base.OnClose();
+    }
+
+    /// <summary>
+    /// Draws the hotbar icon tint picker for combos that can return the same action as
+    /// another combo (marked with <see cref="TintableComboAttribute"/>).
+    /// </summary>
+    /// <param name="preset">Combo preset being drawn.</param>
+    /// <param name="enabled">Whether the combo is currently enabled.</param>
+    private void DrawTintPicker(CustomComboPreset preset, bool enabled)
+    {
+        if (!enabled || preset.GetAttribute<TintableComboAttribute>() == null)
+            return;
+
+        // Stored as 0xAARRGGBB; alpha is the tint intensity. No tint is applied until the user
+        // picks a color, but the picker starts at 50% alpha so a fresh pick is visible at once.
+        var tint = Service.Configuration.GetComboTint(preset) ?? 0x80FFFFFF;
+        var color = new Vector4(
+            ((tint >> 16) & 0xFF) / 255f,
+            ((tint >> 8) & 0xFF) / 255f,
+            (tint & 0xFF) / 255f,
+            ((tint >> 24) & 0xFF) / 255f);
+
+        // A custom popup instead of ColorEdit4's built-in one, so the coloring method
+        // override can live inside the picker.
+        if (ImGui.ColorButton($"###ComboTintButton{(int)preset}", color,
+            ImGuiColorEditFlags.AlphaPreviewHalf | ImGuiColorEditFlags.NoTooltip))
+            ImGui.OpenPopup($"ComboTintPopup{(int)preset}");
+
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            Service.Configuration.ResetComboTint(preset);
+            Service.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.BeginTooltip();
+            ImGui.TextUnformatted("此连击可能与其他连击显示相同技能。\n选择颜色可为快捷栏图标染色以便区分。\n颜色透明度决定染色强度；完全透明时禁用染色。\n右键单击可恢复默认值。");
+            ImGui.EndTooltip();
+        }
+
+        ImGui.SameLine();
+        ImGui.AlignTextToFramePadding();
+        ImGui.Text("图标颜色");
+
+        if (ImGui.BeginPopup($"ComboTintPopup{(int)preset}"))
+        {
+            // Quick-pick palette: 16 default color + intensity combos.
+            for (var i = 0; i < TintPalette.Length; i++)
+            {
+                if (i % 8 != 0)
+                    ImGui.SameLine(0f, 4f);
+
+                var swatch = new Vector4(
+                    ((TintPalette[i] >> 16) & 0xFF) / 255f,
+                    ((TintPalette[i] >> 8) & 0xFF) / 255f,
+                    (TintPalette[i] & 0xFF) / 255f,
+                    ((TintPalette[i] >> 24) & 0xFF) / 255f);
+
+                if (ImGui.ColorButton($"###ComboTintPalette{(int)preset}_{i}", swatch,
+                    ImGuiColorEditFlags.AlphaPreviewHalf, new Vector2(22f, 22f)))
+                {
+                    color = swatch;
+                    Service.Configuration.SetComboTint(preset, TintPalette[i]);
+                    this.tintDirty = true;
+                }
+            }
+
+            ImGui.Spacing();
+
+            // Explicit picker/display flags pin the default layout (hue bar + RGB and hex
+            // inputs); NoOptions removes the right-click menu that would allow swapping modes.
+            if (ImGui.ColorPicker4($"###ComboTintPicker{(int)preset}", ref color,
+                ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.AlphaPreviewHalf
+                | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.PickerHueBar
+                | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
+            {
+                var packed = ((uint)(color.W * 255f + 0.5f) << 24)
+                           | ((uint)(color.X * 255f + 0.5f) << 16)
+                           | ((uint)(color.Y * 255f + 0.5f) << 8)
+                           | (uint)(color.Z * 255f + 0.5f);
+
+                // Only update the in-memory value here — the picker fires every frame while
+                // dragging, and writing the config to disk each frame tanks the framerate.
+                // The deferred save happens in Draw() once no widget is active.
+                Service.Configuration.SetComboTint(preset, packed);
+                this.tintDirty = true;
+            }
+
+            var methodOverride = Service.Configuration.GetComboTintMethod(preset);
+            var methodIdx = methodOverride.HasValue ? (int)methodOverride.Value + 1 : 0;
+            ImGui.SetNextItemWidth(150f);
+            if (ImGui.Combo($"着色方式###ComboTintMethod{(int)preset}", ref methodIdx, ["使用全局设置", "鲜明", "着色", "辉光"], 4))
+            {
+                if (methodIdx == 0)
+                    Service.Configuration.ResetComboTintMethod(preset);
+                else
+                    Service.Configuration.SetComboTintMethod(preset, (IconColoringMethod)(methodIdx - 1));
+                this.tintDirty = true;
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.BeginTooltip();
+                ImGui.TextUnformatted("仅为此连击覆盖全局着色方式。");
+                ImGui.EndTooltip();
+            }
+
+            ImGui.EndPopup();
+        }
+
+        ImGui.Spacing();
     }
 
     private void DrawSection(Tabs tab, CustomComboPreset preset, CustomComboInfoAttribute info, ref int i)
@@ -955,6 +1151,8 @@ public class ConfigWindow : Window
 
         ImGui.Spacing();
 
+        this.DrawTintPicker(preset, enabled);
+
         if (conflicts.Length > 0 && enabled)
         {
             var conflictText = conflicts.Select(conflict =>
@@ -1075,10 +1273,10 @@ public class ConfigWindow : Window
 
         // Outside of bounds, either DoL, DoH, or we messed up.
         if (iconID < 62101 || iconID > 62142)
-            iconID = 62145;
+            iconID = 62146;
         // Adventurer
         if (jobID == 0)
-            iconID = 62146;
+            iconID = 62147;
 
         return GetIcon((uint)iconID);
     }
