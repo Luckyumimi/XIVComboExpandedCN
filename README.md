@@ -17,7 +17,7 @@ XIVCombo 是一个用于实现“一键连击”的插件，同时也提供多�
 对于部分职业，这能大幅节省热键栏空间（说的就是你，`DRG`）。而对大多数职业来说，它可以减少很多机械重复、但实际上没必要拆成多个按键去按的操作负担。
 
 ## 安装方法
-* 将 `https://raw.githubusercontent.com/lichi7887/MyDalamudPlugins/master/pluginmaster.json` 添加到 `/xlsettings` 的第三方仓库列表中，以便获取这个插件。
+* 将 `https://raw.githubusercontent.com/Luckyumimi/MyDalamudPlugins/master/pluginmaster.json` 添加到 `/xlsettings` 的第三方仓库列表中，以便获取这个插件。
 * 在游戏内输入 `/xlplugins` 打开插件安装器和更新器。
 * 首次安装时应会弹出初始化设置窗口。
 
